@@ -9,6 +9,9 @@ Update of VRope 0.3 for cocos2d 0.99.x by [patrickC](http://cleverhamstergames.c
 
 ### Modifications:
 
+- added support for Chipmunk physics engine
+- added support to use an included class CCStretchedSpriteLine so that individual rope segments are always connected.
+
 - added retina fix (tested on iPhone 4s and iPad 3)
 - added global gravity for points, making it easy to update gravity for the entire rope system
 - added individual gravity support for points, making it easy to update gravity for each specific point

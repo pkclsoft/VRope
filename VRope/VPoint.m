@@ -46,6 +46,10 @@ static float vPointGravityY = 9.8f;
 	y = oldy = argY;
 }
 
+- (CGPoint) position {
+    return CGPointMake(self.x, self.y);
+}
+
 -(void)update {
 	float tempx = x;
 	float tempy = y;

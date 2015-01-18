@@ -21,16 +21,39 @@
 
 #import "VRope.h"
 
+// Set this to 1 if you want each sprite that forms the rope to be stretched so that they always join.  Without this,
+// sometimes your rope can become 'gappy' if it is stretched by movement, etc.
+//
+#define USE_STRETCHED_SPRITE 0
+
+#if USE_STRETCHED_SPRITE == 1
+#import "CCStretchedSpriteLine.h"
+#endif
 
 @implementation VRope
 
-#ifdef BOX2D_H
--(id)init:(b2Body*)body1 body2:(b2Body*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode {
+#if PHYSICS_INTEGRATION_ENABLED == 1
+
+#if CC_ENABLE_BOX2D_INTEGRATION == 1
+
+#define vrGetPosition(body) body->GetPosition()
+#define vrGetAnchorA(joint) joint->GetAnchorA()
+#define vrGetAnchorB(joint) joint->GetAnchorB()
+
+#elif CC_ENABLE_CHIPMUNK_INTEGRATION == 1
+
+#define vrGetPosition(body) cpBodyGetPos(body)
+#define vrGetAnchorA(joint) ccpAdd(cpSlideJointGetAnchr1(joint), cpBodyGetPos(cpConstraintGetA(joint)))
+#define vrGetAnchorB(joint) ccpAdd(cpSlideJointGetAnchr2(joint), cpBodyGetPos(cpConstraintGetB(joint)))
+
+#endif
+
+-(id)init:(vrBody*)body1 body2:(vrBody*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode {
 	if((self = [super init])) {
 		bodyA = body1;
 		bodyB = body2;
-		CGPoint pointA = ccp(bodyA->GetPosition().x*PTM_RATIO,bodyA->GetPosition().y*PTM_RATIO);
-		CGPoint pointB = ccp(bodyB->GetPosition().x*PTM_RATIO,bodyB->GetPosition().y*PTM_RATIO);
+		CGPoint pointA = ccp(vrGetPosition(bodyA).x*PTM_RATIO,vrGetPosition(bodyA).y*PTM_RATIO);
+		CGPoint pointB = ccp(vrGetPosition(bodyB).x*PTM_RATIO,vrGetPosition(bodyB).y*PTM_RATIO);
 		spriteSheet = ropeBatchNode;
 		[self createRope:pointA pointB:pointB];
 	}
@@ -38,11 +61,11 @@
 }
 
 // Flightless, init rope using a joint between two bodies
--(id)init:(b2Joint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode {
+-(id)init:(vrJoint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode {
     if((self = [super init])) {
 		jointAB = joint;
-		CGPoint pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
-		CGPoint pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
+		CGPoint pointA = ccp(vrGetAnchorA(jointAB).x*PTM_RATIO,vrGetAnchorA(jointAB).y*PTM_RATIO);
+		CGPoint pointB = ccp(vrGetAnchorB(jointAB).x*PTM_RATIO,vrGetAnchorB(jointAB).y*PTM_RATIO);
 		spriteSheet = ropeBatchNode;
 		[self createRope:pointA pointB:pointB];
 	}
@@ -52,11 +75,11 @@
 -(void)reset {
     CGPoint pointA, pointB;
     if (bodyA) {
-        pointA = ccp(bodyA->GetPosition().x*PTM_RATIO,bodyA->GetPosition().y*PTM_RATIO);
-        pointB = ccp(bodyB->GetPosition().x*PTM_RATIO,bodyB->GetPosition().y*PTM_RATIO);
+        pointA = ccp(vrGetPosition(bodyA).x*PTM_RATIO,vrGetPosition(bodyA).y*PTM_RATIO);
+        pointB = ccp(vrGetPosition(bodyB).x*PTM_RATIO,vrGetPosition(bodyB).y*PTM_RATIO);
     } else {
-        pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
-        pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
+        pointA = ccp(vrGetAnchorA(jointAB).x*PTM_RATIO,vrGetAnchorA(jointAB).y*PTM_RATIO);
+        pointB = ccp(vrGetAnchorB(jointAB).x*PTM_RATIO,vrGetAnchorB(jointAB).y*PTM_RATIO);
     }
     [self resetWithPoints:pointA pointB:pointB];
 }
@@ -64,11 +87,11 @@
 -(void)update:(float)dt {
     CGPoint pointA, pointB;
     if (bodyA) {
-        pointA = ccp(bodyA->GetPosition().x*PTM_RATIO,bodyA->GetPosition().y*PTM_RATIO);
-        pointB = ccp(bodyB->GetPosition().x*PTM_RATIO,bodyB->GetPosition().y*PTM_RATIO);
+        pointA = ccp(vrGetPosition(bodyA).x*PTM_RATIO,vrGetPosition(bodyA).y*PTM_RATIO);
+        pointB = ccp(vrGetPosition(bodyB).x*PTM_RATIO,vrGetPosition(bodyB).y*PTM_RATIO);
     } else {
-        pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
-        pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
+        pointA = ccp(vrGetAnchorA(jointAB).x*PTM_RATIO,vrGetAnchorA(jointAB).y*PTM_RATIO);
+        pointB = ccp(vrGetAnchorB(jointAB).x*PTM_RATIO,vrGetAnchorB(jointAB).y*PTM_RATIO);
     }
     [self updateWithPoints:pointA pointB:pointB dt:dt];
 }
@@ -77,11 +100,11 @@
 -(void)updateWithPreIntegratedGravity:(float)dt gravityX:(float)gravityX gravityY:(float)gravityY {
     CGPoint pointA, pointB;
     if (bodyA) {
-        pointA = ccp(bodyA->GetPosition().x*PTM_RATIO,bodyA->GetPosition().y*PTM_RATIO);
-        pointB = ccp(bodyB->GetPosition().x*PTM_RATIO,bodyB->GetPosition().y*PTM_RATIO);
+        pointA = ccp(vrGetPosition(bodyA).x*PTM_RATIO,vrGetPosition(bodyA).y*PTM_RATIO);
+        pointB = ccp(vrGetPosition(bodyB).x*PTM_RATIO,vrGetPosition(bodyB).y*PTM_RATIO);
     } else {
-        pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
-        pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
+        pointA = ccp(vrGetAnchorA(jointAB).x*PTM_RATIO,vrGetAnchorA(jointAB).y*PTM_RATIO);
+        pointB = ccp(vrGetAnchorB(jointAB).x*PTM_RATIO,vrGetAnchorB(jointAB).y*PTM_RATIO);
     }
     
     // update points with pre-integrated gravity
@@ -93,11 +116,11 @@
 -(void)updateWithPreIntegratedGravity:(float)dt {
     CGPoint pointA, pointB;
     if (bodyA) {
-        pointA = ccp(bodyA->GetPosition().x*PTM_RATIO,bodyA->GetPosition().y*PTM_RATIO);
-        pointB = ccp(bodyB->GetPosition().x*PTM_RATIO,bodyB->GetPosition().y*PTM_RATIO);
+        pointA = ccp(vrGetPosition(bodyA).x*PTM_RATIO,vrGetPosition(bodyA).y*PTM_RATIO);
+        pointB = ccp(vrGetPosition(bodyB).x*PTM_RATIO,vrGetPosition(bodyB).y*PTM_RATIO);
     } else {
-        pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
-        pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
+        pointA = ccp(vrGetAnchorA(jointAB).x*PTM_RATIO,vrGetAnchorA(jointAB).y*PTM_RATIO);
+        pointB = ccp(vrGetAnchorB(jointAB).x*PTM_RATIO,vrGetAnchorB(jointAB).y*PTM_RATIO);
     }
     
     // pre-integrate current gravity
@@ -112,11 +135,11 @@
 -(void)updateWithPreIntegratedOriginGravity:(float)dt {
     CGPoint pointA, pointB;
     if (bodyA) {
-        pointA = ccp(bodyA->GetPosition().x*PTM_RATIO,bodyA->GetPosition().y*PTM_RATIO);
-        pointB = ccp(bodyB->GetPosition().x*PTM_RATIO,bodyB->GetPosition().y*PTM_RATIO);
+        pointA = ccp(vrGetPosition(bodyA).x*PTM_RATIO,vrGetPosition(bodyA).y*PTM_RATIO);
+        pointB = ccp(vrGetPosition(bodyB).x*PTM_RATIO,vrGetPosition(bodyB).y*PTM_RATIO);
     } else {
-        pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
-        pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
+        pointA = ccp(vrGetAnchorA(jointAB).x*PTM_RATIO,vrGetAnchorA(jointAB).y*PTM_RATIO);
+        pointB = ccp(vrGetAnchorB(jointAB).x*PTM_RATIO,vrGetAnchorB(jointAB).y*PTM_RATIO);
     }
     
     // pre-integrate gravity, based on average position of bodies
@@ -163,6 +186,7 @@
 		for(int i=0;i<numPoints-1;i++) {
 			VPoint *point1 = [[vSticks objectAtIndex:i] getPointA];
 			VPoint *point2 = [[vSticks objectAtIndex:i] getPointB];
+#if USE_STRETCHED_SPRITE == 0
 			CGPoint stickVector = ccpSub(ccp(point1.x,point1.y),ccp(point2.x,point2.y));
 			float stickAngle = ccpToAngle(stickVector);
             
@@ -170,14 +194,19 @@
             //CCSprite *tmpSprite = [CCSprite spriteWithBatchNode:spriteSheet rect:CGRectMake(0,0,multiplier,[[[spriteSheet textureAtlas] texture] pixelsHigh]/CC_CONTENT_SCALE_FACTOR())]; // Flightless, retina fix
             
             // cocos 2.x
-            CCSprite* tmpSprite = [CCSprite spriteWithTexture:spriteSheet.texture rect:CGRectMake(0,0,multiplier,[[[spriteSheet textureAtlas] texture] pixelsHigh]/CC_CONTENT_SCALE_FACTOR())]; // Flightless, retina fix
+            CCSprite* tmpSprite = [CCSprite spriteWithTexture:spriteSheet.texture rect:CGRectMake(0,0,multiplier,[[[spriteSheet textureAtlas] texture] pixelsHigh] /CC_CONTENT_SCALE_FACTOR())]; // Flightless, retina fix
             tmpSprite.batchNode = spriteSheet;
-            
-			ccTexParams params = {GL_LINEAR,GL_LINEAR,GL_REPEAT,GL_REPEAT};
-			[tmpSprite.texture setTexParameters:&params];
-			[tmpSprite setPosition:ccpMidpoint(ccp(point1.x,point1.y),ccp(point2.x,point2.y))];
-			[tmpSprite setRotation:-1 * CC_RADIANS_TO_DEGREES(stickAngle)];
-			[spriteSheet addChild:tmpSprite];
+
+            ccTexParams params = {GL_LINEAR,GL_LINEAR,GL_REPEAT,GL_REPEAT};
+            [tmpSprite.texture setTexParameters:&params];
+            [tmpSprite setPosition:ccpMidpoint(ccp(point1.x,point1.y),ccp(point2.x,point2.y))];
+            [tmpSprite setRotation:-1 * CC_RADIANS_TO_DEGREES(stickAngle)];
+#else
+            CCStretchedSpriteLine *tmpSprite = [CCStretchedSpriteLine stretchedSpriteLineFrom:point1.position to:point2.position andSpriteFrameName:@"longrope.png"];
+            tmpSprite.batchNode = spriteSheet;
+#endif
+
+            [spriteSheet addChild:tmpSprite];
 			[ropeSprites addObject:tmpSprite];
 		}
 	}
@@ -197,11 +226,14 @@
 
 -(void)removeSprites {
 	for(int i=0;i<numPoints-1;i++) {
-		CCSprite *tmpSprite = [ropeSprites objectAtIndex:i];
+#if USE_STRETCHED_SPRITE == 0
+        CCSprite *tmpSprite = [ropeSprites objectAtIndex:i];
+#else
+		CCStretchedSpriteLine *tmpSprite = [ropeSprites objectAtIndex:i];
+#endif
 		[spriteSheet removeChild:tmpSprite cleanup:YES];
 	}
 	[ropeSprites removeAllObjects];
-	[ropeSprites release];
 }
 
 -(void)updateWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB dt:(float)dt {
@@ -250,12 +282,19 @@
 		for(int i=0;i<numPoints-1;i++) {
 			VPoint *point1 = [[vSticks objectAtIndex:i] getPointA];
 			VPoint *point2 = [[vSticks objectAtIndex:i] getPointB];
+            
+#if USE_STRETCHED_SPRITE == 0
 			CGPoint point1_ = ccp(point1.x,point1.y);
 			CGPoint point2_ = ccp(point2.x,point2.y);
 			float stickAngle = ccpToAngle(ccpSub(point1_,point2_));
-			CCSprite *tmpSprite = [ropeSprites objectAtIndex:i];
-			[tmpSprite setPosition:ccpMidpoint(point1_,point2_)];
-			[tmpSprite setRotation: -CC_RADIANS_TO_DEGREES(stickAngle)];
+            CCSprite *tmpSprite = [ropeSprites objectAtIndex:i];
+            [tmpSprite setPosition:ccpMidpoint(point1_,point2_)];
+            [tmpSprite setRotation: -CC_RADIANS_TO_DEGREES(stickAngle)];
+#else
+			CCStretchedSpriteLine *tmpSprite = [ropeSprites objectAtIndex:i];
+            tmpSprite.fromPosition = point1.position;
+            tmpSprite.toPosition = point2.position;
+#endif
 		}
 	}	
 }

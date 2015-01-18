@@ -28,6 +28,7 @@
 
 @property(nonatomic,assign) float x;
 @property(nonatomic,assign) float y;
+@property(nonatomic,readonly) CGPoint position;
 
 +(void) setGravityX:(float)gx Y:(float)gy; // Flightless, global gravity for all VPoints
 +(CGPoint) getGravity; // Flightless, global gravity for all VPoints
@@ -37,5 +38,4 @@
 -(void) applyGravity:(float)dt;
 -(void) applyGravity:(float)dt gx:(float)gx gy:(float)gy; // Flightless, time delta and specific gravity for point
 -(void) applyGravityxdt:(float)gxdt gydt:(float)gydt; // Flightless, pre-integrated step with specific gravity for point
-
 @end

@@ -105,7 +105,7 @@ HOW TO USE:
 Import VRope.h into your class
  
 CREATE:
-To create a verlet rope, you need to pass two b2Body pointers (start and end bodies of rope)
+To create a verlet rope, you need to pass two 'Body' pointers (start and end bodies of rope)
 and a CCSpriteBatchNode that contains a single sprite for the rope's segment. 
 The sprite should be small and tileable horizontally, as it gets repeated with GL_REPEAT for the necessary length of the rope segment.
 
@@ -147,10 +147,37 @@ Good luck :)
 #import "VPoint.h"
 #import "VStick.h"
 #import "cocos2d.h"
+
+// Set up some macros for either Box2D or Chipmunk, depending on what is configured.
+//
+#if CC_ENABLE_BOX2D_INTEGRATION == 1
+
+// Box2D
+
 #import "Box2D.h"
+#define vrBody b2Body
+#define vrJoint b2Joint
+#define PHYSICS_INTEGRATION_ENABLED 1
 
 //PTM_RATIO defined here is for testing purposes, it should obviously be the same as your box2d world or, better yet, import a common header where PTM_RATIO is defined
-#define PTM_RATIO 32
+#define PTM_RATIO 32.0
+
+#elif CC_ENABLE_CHIPMUNK_INTEGRATION == 1
+
+// Chipmunk
+
+#import "chipmunk.h"
+#define vrBody cpBody
+#define vrJoint cpConstraint
+#define PHYSICS_INTEGRATION_ENABLED 1
+
+// For chipmunk this is irrelevant.
+//
+#define PTM_RATIO 1.0
+
+#else
+#define PHYSICS_INTEGRATION_ENABLED 0
+#endif
 
 @interface VRope : NSObject {
 	int numPoints;
@@ -159,21 +186,25 @@ Good luck :)
 	NSMutableArray *ropeSprites;
 	CCSpriteBatchNode* spriteSheet;
 	float antiSagHack;
-	#ifdef BOX2D_H
-	b2Body *bodyA;
-	b2Body *bodyB;
-    b2Joint *jointAB;
+	#if PHYSICS_INTEGRATION_ENABLED == 1
+	vrBody *bodyA;
+	vrBody *bodyB;
+    vrJoint *jointAB;
 	#endif
 }
-#ifdef BOX2D_H
--(id)init:(b2Body*)body1 body2:(b2Body*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode;
--(id)init:(b2Joint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode; // Flightless, init rope using a joint between two bodies
+
+// Physics engine integration.
+//
+#if PHYSICS_INTEGRATION_ENABLED == 1
+-(id)init:(vrBody*)body1 body2:(vrBody*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode;
+-(id)init:(vrJoint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode; // Flightless, init rope using a joint between two bodies
 -(void)update:(float)dt;
 -(void)updateWithPreIntegratedGravity:(float)dt; // Flightless, update rope by pre-integrating the gravity each step (optimised for changing gravity)
 -(void)updateWithPreIntegratedGravity:(float)dt gravityX:(float)gravityX gravityY:(float)gravityY; // Flightless, update rope by pre-integrating the gravity each step (optimised for changing gravity)
 -(void)updateWithPreIntegratedOriginGravity:(float)dt; // Flightless, update rope by pre-integrating the gravity each step (optimised for changing gravity)
 -(void)reset;
 #endif
+
 -(id)initWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB spriteSheet:(CCSpriteBatchNode*)spriteSheetArg;
 -(void)createRope:(CGPoint)pointA pointB:(CGPoint)pointB;
 -(void)resetWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB;
