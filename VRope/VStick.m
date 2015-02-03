@@ -32,17 +32,23 @@
 	return self;
 }
 
--(void)contract {
+-(void)contractAtBeginning:(BOOL)atBeginning andEnd:(BOOL)atEnd {
 	float dx = pointB.x - pointA.x;
 	float dy = pointB.y - pointA.y;
 	float h = ccpDistance(ccp(pointA.x,pointA.y),ccp(pointB.x,pointB.y));
 	float diff = hypotenuse - h;
 	float offx = (diff * dx / h) * 0.5;
 	float offy = (diff * dy / h) * 0.5;
-	pointA.x-=offx;
-	pointA.y-=offy;
-	pointB.x+=offx;
-	pointB.y+=offy;
+    
+    if (atBeginning == NO) {
+        pointA.x-=offx;
+        pointA.y-=offy;
+    }
+    
+    if (atEnd == NO) {
+        pointB.x+=offx;
+        pointB.y+=offy;
+    }
 }
 -(VPoint*)getPointA {
 	return pointA;

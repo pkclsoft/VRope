@@ -193,10 +193,23 @@ Good luck :)
 	#endif
 }
 
+@property (nonatomic, retain) NSString *ropeFrameName;
+
+/**
+ * This structure is used as a convenient container for the standard parameters used to initialise, and
+ * later, update the rope.
+ */
+typedef struct {
+    CGPoint pointA;  // The starting point of the rope.
+    CGPoint pointB;  // The ending point of the rope.
+    float length;    // The current length of the rope.
+} RopeParameters;
+
 // Physics engine integration.
 //
 #if PHYSICS_INTEGRATION_ENABLED == 1
 -(id)init:(vrBody*)body1 body2:(vrBody*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode;
+-(id)init:(vrBody*)body1 body2:(vrBody*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode spriteFrameName:(NSString*)frameName;
 -(id)init:(vrJoint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode; // Flightless, init rope using a joint between two bodies
 -(void)update:(float)dt;
 -(void)updateWithPreIntegratedGravity:(float)dt; // Flightless, update rope by pre-integrating the gravity each step (optimised for changing gravity)
@@ -206,11 +219,15 @@ Good luck :)
 #endif
 
 -(id)initWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB spriteSheet:(CCSpriteBatchNode*)spriteSheetArg;
+-(id)initWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB spriteSheet:(CCSpriteBatchNode*)spriteSheetArg spriteFrameName:(NSString*)frameName;
 -(void)createRope:(CGPoint)pointA pointB:(CGPoint)pointB;
 -(void)resetWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB;
+-(void)resetWithParameters:(RopeParameters)parameters;
 -(void)updateWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB dt:(float)dt;
+-(void)updateWithParameters:(RopeParameters)parameters dt:(float)dt;
 -(void)updateWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB gxdt:(float)gxdt gydt:(float)gydt; // Flightless, update with support for pre-integrating the gravity each step (optimised for changing gravity)
-//-(void)debugDraw; // opengl es 1.1 only
+-(void)updateWithParameters:(RopeParameters)parameters gxdt:(float)gxdt gydt:(float)gydt;
+-(void)debugDraw; // opengl es 1.1 only
 -(void)updateSprites;
 -(void)removeSprites;
 

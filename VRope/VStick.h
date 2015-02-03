@@ -28,7 +28,7 @@
 	float hypotenuse;
 }
 -(id)initWith:(VPoint*)argA pointb:(VPoint*)argB;
--(void)contract;
+-(void)contractAtBeginning:(BOOL)atBeginning andEnd:(BOOL)atEnd;
 -(VPoint*)getPointA;
 -(VPoint*)getPointB;
 @end
